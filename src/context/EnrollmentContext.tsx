@@ -1,7 +1,13 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Course, courses as allCourses } from '@/data/courses';
 
 type Step = 'select' | 'review' | 'confirm';
+
+export type EnrollmentError =
+  | { kind: 'slot-full'; course: Course; alternatives?: string[] }
+  | { kind: 'prerequisite'; course: Course; missing: string[] }
+  | { kind: 'conflict'; courseA: Course; courseB: Course }
+  | { kind: 'network'; retry: () => void };
 
 interface EnrollmentState {
   step: Step;
@@ -9,6 +15,8 @@ interface EnrollmentState {
   courses: Course[];
   confirmed: boolean;
   showSchedule: boolean;
+  /** R1 — indicador visual de auto-save */
+  lastSavedAt: Date | null;
   setStep: (step: Step) => void;
   toggleCourse: (course: Course) => boolean;
   removeCourse: (id: string) => void;
@@ -16,10 +24,13 @@ interface EnrollmentState {
   reset: () => void;
   setShowSchedule: (v: boolean) => void;
   hasConflict: (course: Course) => Course | null;
+  /** R4 — IDs de todas as disciplinas atualmente em conflito */
+  conflictingIds: Set<string>;
   totalCredits: number;
 }
 
 const EnrollmentContext = createContext<EnrollmentState | null>(null);
+const STORAGE_KEY = 'enrollment.selectedCourseIds.v1';
 
 export function useEnrollment() {
   const ctx = useContext(EnrollmentContext);
@@ -34,9 +45,30 @@ function timesOverlap(a: { start: string; end: string }, b: { start: string; end
 
 export function EnrollmentProvider({ children }: { children: React.ReactNode }) {
   const [step, setStep] = useState<Step>('select');
-  const [selectedCourses, setSelectedCourses] = useState<Course[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<Course[]>(() => {
+    // R1 — Restaura seleções salvas do localStorage
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      const ids: string[] = JSON.parse(raw);
+      return allCourses.filter(c => ids.includes(c.id));
+    } catch {
+      return [];
+    }
+  });
   const [confirmed, setConfirmed] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
+
+  // R1 — Auto-save em localStorage a cada mudança
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedCourses.map(c => c.id)));
+      setLastSavedAt(new Date());
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [selectedCourses]);
 
   const totalCredits = selectedCourses.reduce((s, c) => s + c.credits, 0);
 
@@ -52,15 +84,29 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
     return null;
   }, [selectedCourses]);
 
-  const toggleCourse = useCallback((course: Course): boolean => {
-    const exists = selectedCourses.find(c => c.id === course.id);
-    if (exists) {
-      setSelectedCourses(prev => prev.filter(c => c.id !== course.id));
-      return true;
+  // R4 — Computa todos os IDs em conflito (para destacar ambos os lados)
+  const conflictingIds = React.useMemo(() => {
+    const ids = new Set<string>();
+    for (let i = 0; i < selectedCourses.length; i++) {
+      for (let j = i + 1; j < selectedCourses.length; j++) {
+        const a = selectedCourses[i], b = selectedCourses[j];
+        const clash = a.schedule.some(sa =>
+          b.schedule.some(sb => sa.day === sb.day && timesOverlap(sa, sb))
+        );
+        if (clash) { ids.add(a.id); ids.add(b.id); }
+      }
     }
-    setSelectedCourses(prev => [...prev, course]);
-    return true;
+    return ids;
   }, [selectedCourses]);
+
+  const toggleCourse = useCallback((course: Course): boolean => {
+    setSelectedCourses(prev =>
+      prev.find(c => c.id === course.id)
+        ? prev.filter(c => c.id !== course.id)
+        : [...prev, course]
+    );
+    return true;
+  }, []);
 
   const removeCourse = useCallback((id: string) => {
     setSelectedCourses(prev => prev.filter(c => c.id !== id));
@@ -69,6 +115,7 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
   const confirmEnrollment = useCallback(() => {
     setConfirmed(true);
     setStep('confirm');
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   }, []);
 
   const reset = useCallback(() => {
@@ -79,9 +126,9 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
 
   return (
     <EnrollmentContext.Provider value={{
-      step, selectedCourses, courses: allCourses, confirmed, showSchedule,
+      step, selectedCourses, courses: allCourses, confirmed, showSchedule, lastSavedAt,
       setStep, toggleCourse, removeCourse, confirmEnrollment, reset,
-      setShowSchedule, hasConflict, totalCredits,
+      setShowSchedule, hasConflict, conflictingIds, totalCredits,
     }}>
       {children}
     </EnrollmentContext.Provider>

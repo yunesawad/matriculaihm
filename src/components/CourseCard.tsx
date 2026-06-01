@@ -7,15 +7,19 @@ import { AlertTriangle, Check, Info, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import CompactCodeTooltip from './CompactCodeTooltip';
+import { getCompactCode } from '@/lib/compactCode';
 
 interface CourseCardProps {
   course: Course;
 }
 
 const CourseCard = ({ course }: CourseCardProps) => {
-  const { selectedCourses, toggleCourse, hasConflict } = useEnrollment();
+  const { selectedCourses, toggleCourse, hasConflict, conflictingIds } = useEnrollment();
   const isSelected = selectedCourses.some(c => c.id === course.id);
   const conflict = !isSelected ? hasConflict(course) : null;
+  // R4 — Quando selecionado, ambos os lados do conflito ficam destacados
+  const isInConflict = isSelected && conflictingIds.has(course.id);
   const [justSelected, setJustSelected] = useState(false);
   const slotsLow = course.slots.total - course.slots.taken <= 5;
   const slotsFull = course.slots.taken >= course.slots.total;
@@ -47,7 +51,9 @@ const CourseCard = ({ course }: CourseCardProps) => {
       className={cn(
         'bg-card rounded-xl border-l-4 border border-border p-4 transition-all cursor-pointer',
         areaColors[course.area] || areaColors.default,
-        isSelected && 'ring-2 ring-primary/50 border-primary/30 bg-primary/5',
+        isSelected && !isInConflict && 'ring-2 ring-primary/50 border-primary/30 bg-primary/5',
+        // R4 — destaque vermelho quando ambas selecionadas conflitam
+        isInConflict && 'ring-2 ring-destructive border-destructive bg-destructive/5 conflict-stripes',
         conflict && !isSelected && 'opacity-80',
         !course.enabled && 'opacity-50 cursor-not-allowed',
         slotsFull && course.enabled && 'opacity-60',
@@ -95,7 +101,11 @@ const CourseCard = ({ course }: CourseCardProps) => {
           </div>
 
           <p className="text-sm text-muted-foreground mb-1">{course.professor}</p>
-          <p className="text-sm text-foreground/80 mb-2">📅 {scheduleText}</p>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <p className="text-sm text-foreground/80">📅 {scheduleText}</p>
+            {/* R3 — código compacto traduzido em tooltip */}
+            <CompactCodeTooltip code={getCompactCode(course)} />
+          </div>
 
           <div className="flex flex-wrap items-center gap-2">
             {/* Slots */}
@@ -133,6 +143,11 @@ const CourseCard = ({ course }: CourseCardProps) => {
                 <AlertTriangle className="w-3 h-3 mr-0.5" /> Conflito com {conflict.code}
               </Badge>
             )}
+            {isInConflict && (
+              <Badge className="bg-destructive text-destructive-foreground border-0 text-xs">
+                <AlertTriangle className="w-3 h-3 mr-0.5" /> Em conflito de horário
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -141,3 +156,4 @@ const CourseCard = ({ course }: CourseCardProps) => {
 };
 
 export default CourseCard;
+

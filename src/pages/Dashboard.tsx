@@ -1,11 +1,25 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, FileText, GraduationCap, HelpCircle, History, LayoutDashboard, Star } from 'lucide-react';
+import { Bell, BookOpen, Clock, FileText, GraduationCap, HelpCircle, History, LayoutDashboard, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+
 
 const Dashboard = () => {
   const navigate = useNavigate();
+
+  // R5 — Contagem regressiva até o fim do período de matrícula
+  const deadline = new Date('2026-03-30T23:59:59');
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+  const diffMs = deadline.getTime() - now.getTime();
+  const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  const isOpen = diffMs > 0;
+
 
   const quickLinks = [
     { icon: History, label: 'Histórico', href: '#' },
@@ -80,16 +94,36 @@ const Dashboard = () => {
                 <div className="absolute -right-20 -top-20 w-60 h-60 rounded-full bg-primary-foreground/20" />
                 <div className="absolute -left-10 -bottom-10 w-40 h-40 rounded-full bg-primary-foreground/10" />
               </div>
+              {/* R5 — Badge ABERTO pulsante destacando o período corrente */}
               <div className="relative">
-                <Badge className="bg-primary-foreground/20 text-primary-foreground border-0 mb-3">
-                  Período de Matrícula
-                </Badge>
+                <div className="flex items-center gap-2 mb-3">
+                  {isOpen && (
+                    <Badge className="bg-success text-success-foreground border-0 font-bold gap-1.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success-foreground opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-success-foreground" />
+                      </span>
+                      ABERTO AGORA
+                    </Badge>
+                  )}
+                  <Badge className="bg-primary-foreground/20 text-primary-foreground border-0">
+                    Período de Matrícula
+                  </Badge>
+                </div>
                 <h2 className="font-display text-2xl font-bold mb-1">
                   Matrícula aberta para 2026.2
                 </h2>
-                <p className="text-primary-foreground/80 mb-4">
-                  Prazo: 15/03 a 30/03/2026
-                </p>
+                <div className="flex items-center gap-2 mb-4 text-primary-foreground/90">
+                  <Clock className="w-4 h-4" />
+                  <p>
+                    Prazo: 15/03 a 30/03/2026
+                    {isOpen && (
+                      <span className="ml-2 font-bold">
+                        — {daysLeft} {daysLeft === 1 ? 'dia restante' : 'dias restantes'}
+                      </span>
+                    )}
+                  </p>
+                </div>
                 <Button
                   onClick={() => navigate('/matricula')}
                   size="lg"
@@ -100,6 +134,7 @@ const Dashboard = () => {
                 </Button>
               </div>
             </motion.div>
+
 
             {/* Semester Summary */}
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>

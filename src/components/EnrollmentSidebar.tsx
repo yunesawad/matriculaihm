@@ -1,26 +1,18 @@
 import { useEnrollment } from '@/context/EnrollmentContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Calendar, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Calendar, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const EnrollmentSidebar = () => {
-  const { selectedCourses, removeCourse, totalCredits, setShowSchedule, setStep, hasConflict } = useEnrollment();
 
-  const conflicts = selectedCourses.filter(c => {
-    const others = selectedCourses.filter(o => o.id !== c.id);
-    for (const o of others) {
-      for (const sa of c.schedule) {
-        for (const sb of o.schedule) {
-          if (sa.day === sb.day) {
-            const toMin = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-            if (toMin(sa.start) < toMin(sb.end) && toMin(sb.start) < toMin(sa.end)) return true;
-          }
-        }
-      }
-    }
-    return false;
-  });
+const EnrollmentSidebar = () => {
+  const { selectedCourses, removeCourse, totalCredits, setShowSchedule, setStep, lastSavedAt, conflictingIds } = useEnrollment();
+
+  const hasAnyConflict = conflictingIds.size > 0;
+  const savedLabel = lastSavedAt
+    ? `Salvo às ${lastSavedAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+    : 'Aguardando salvamento';
+
 
   return (
     <div className="bg-card rounded-xl border border-border p-4 sticky top-24 space-y-4">
@@ -30,6 +22,13 @@ const EnrollmentSidebar = () => {
           {selectedCourses.length} disc. · {totalCredits} cred.
         </Badge>
       </div>
+
+      {/* R1 — Indicador de auto-save */}
+      <div className="flex items-center gap-1.5 text-xs text-success">
+        <Check className="w-3 h-3" />
+        <span>{savedLabel} automaticamente</span>
+      </div>
+
 
       <div className="space-y-2 max-h-64 overflow-y-auto">
         <AnimatePresence>
@@ -57,10 +56,15 @@ const EnrollmentSidebar = () => {
         </AnimatePresence>
       </div>
 
-      {conflicts.length > 0 && (
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          Conflito de horário detectado!
+      {hasAnyConflict && (
+        <div className="p-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium space-y-1">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>Conflito de horário detectado</span>
+          </div>
+          <p className="text-[11px] text-destructive/80 ml-6">
+            Disciplinas em conflito estão marcadas em vermelho. Remova uma delas para prosseguir.
+          </p>
         </div>
       )}
 
