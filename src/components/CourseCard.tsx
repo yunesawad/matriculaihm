@@ -157,5 +157,3 @@ const CourseCard = ({ course }: CourseCardProps) => {
 
 export default CourseCard;
 
-
-export default CourseCard;
