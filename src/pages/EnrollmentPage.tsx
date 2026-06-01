@@ -167,26 +167,46 @@ const EnrollmentPage = () => {
             </div>
           </div>
 
-          {/* Alerts */}
+          {/* R2 + R4 — Mensagens de erro específicas com causa e ação recomendada */}
           <div className="space-y-2 mb-6">
             {!hasConflicts ? (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success text-sm font-medium">
                 <CheckCircle2 className="w-4 h-4" /> Sem conflitos de horário
               </div>
             ) : (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">
-                <AlertTriangle className="w-4 h-4" /> Conflito de horário detectado!
+              <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm space-y-2">
+                <div className="flex items-center gap-2 font-semibold">
+                  <AlertTriangle className="w-4 h-4" />
+                  Conflito de horário entre disciplinas selecionadas
+                </div>
+                <p className="text-xs text-destructive/90">
+                  <strong>Causa:</strong> duas ou mais disciplinas ocupam o mesmo dia e horário na semana.
+                </p>
+                <p className="text-xs text-destructive/90">
+                  <strong>O que fazer:</strong> abra <em>Ver Grade Horária</em> para identificar a sobreposição
+                  ou volte e remova uma das disciplinas em vermelho.
+                </p>
               </div>
             )}
             {weeklyHours > 24 && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-warning/10 text-warning text-sm font-medium">
-                <AlertTriangle className="w-4 h-4" /> Carga horária alta ({weeklyHours}h/semana) - Média: 20h
+              <div className="p-3 rounded-lg bg-warning/10 text-warning text-sm space-y-1">
+                <div className="flex items-center gap-2 font-semibold">
+                  <AlertTriangle className="w-4 h-4" />
+                  Carga horária alta ({weeklyHours}h/semana)
+                </div>
+                <p className="text-xs text-warning/90">
+                  <strong>Causa:</strong> média sugerida pela coordenação é de 20h/semana.
+                </p>
+                <p className="text-xs text-warning/90">
+                  <strong>O que fazer:</strong> avalie remover uma optativa para reduzir o risco de reprovação.
+                </p>
               </div>
             )}
             <div className="flex items-center gap-2 p-3 rounded-lg bg-success/10 text-success text-sm font-medium">
               <CheckCircle2 className="w-4 h-4" /> Todos os pré-requisitos atendidos
             </div>
           </div>
+
 
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setStep('select')}>
