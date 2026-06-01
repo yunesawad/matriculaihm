@@ -56,10 +56,15 @@ const EnrollmentSidebar = () => {
         </AnimatePresence>
       </div>
 
-      {conflicts.length > 0 && (
-        <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium">
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          Conflito de horário detectado!
+      {hasAnyConflict && (
+        <div className="p-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium space-y-1">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            <span>Conflito de horário detectado</span>
+          </div>
+          <p className="text-[11px] text-destructive/80 ml-6">
+            Disciplinas em conflito estão marcadas em vermelho. Remova uma delas para prosseguir.
+          </p>
         </div>
       )}
 
