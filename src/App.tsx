@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { EnrollmentProvider } from "@/context/EnrollmentContext";
 import Dashboard from "./pages/Dashboard";
 import EnrollmentPage from "./pages/EnrollmentPage";
+import Attendance from "./pages/Attendance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/matricula" element={<EnrollmentPage />} />
+            <Route path="/presenca" element={<Attendance />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
