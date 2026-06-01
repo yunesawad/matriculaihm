@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, Clock, FileText, GraduationCap, HelpCircle, History, LayoutDashboard, Star } from 'lucide-react';
+import { Bell, BookOpen, CalendarCheck, Clock, FileText, GraduationCap, HelpCircle, History, LayoutDashboard, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
@@ -22,6 +22,7 @@ const Dashboard = () => {
 
 
   const quickLinks = [
+    { icon: CalendarCheck, label: 'Controle de Presença', href: '/presenca' },
     { icon: History, label: 'Histórico', href: '#' },
     { icon: Star, label: 'Notas', href: '#' },
     { icon: FileText, label: 'Documentos', href: '#' },
