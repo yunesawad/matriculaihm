@@ -6,7 +6,7 @@ export interface Course {
   professor: string;
   schedule: { day: string; start: string; end: string; room: string }[];
   /** Código acadêmico compacto original (ex.: "2M34 4M34") — traduzido na UI */
-  compactCode: string;
+  compactCode?: string;
   slots: { taken: number; total: number };
   prerequisites: string[];
   prerequisitesMet: boolean;
