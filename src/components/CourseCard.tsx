@@ -156,11 +156,6 @@ const CourseCard = ({ course }: CourseCardProps) => {
 };
 
 export default CourseCard;
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
+
 
 export default CourseCard;
