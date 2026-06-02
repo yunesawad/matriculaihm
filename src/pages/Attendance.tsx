@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft, Calendar, CheckCircle2, ClipboardList, Download, FileWarning, GraduationCap, XCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Calendar, CheckCircle2, ClipboardList, Download, FileWarning, GraduationCap, Sparkles, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { subjectsAttendance, type SubjectAttendance } from '@/data/attendance';
+import { getAllSubjects, type SubjectAttendance } from '@/data/attendance';
 
 type FilterStatus = 'todos' | 'presente' | 'falta' | 'justificada';
 
