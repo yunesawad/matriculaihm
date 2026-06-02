@@ -18,6 +18,7 @@ const statusMeta = {
 } as const;
 
 function attendanceRate(s: SubjectAttendance) {
+  if (!s.totalClasses) return 0;
   return Math.round((s.attendedClasses / s.totalClasses) * 100);
 }
 function riskLevel(s: SubjectAttendance): 'ok' | 'alerta' | 'critico' {
