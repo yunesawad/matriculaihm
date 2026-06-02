@@ -7,6 +7,7 @@ import { EnrollmentProvider } from "@/context/EnrollmentContext";
 import Dashboard from "./pages/Dashboard";
 import EnrollmentPage from "./pages/EnrollmentPage";
 import Attendance from "./pages/Attendance";
+import SubjectDetail from "./pages/SubjectDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/matricula" element={<EnrollmentPage />} />
             <Route path="/presenca" element={<Attendance />} />
+            <Route path="/materia/:id" element={<SubjectDetail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

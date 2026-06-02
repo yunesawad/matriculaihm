@@ -30,11 +30,11 @@ const Dashboard = () => {
   ];
 
   const subjects = [
-    { name: 'Cálculo II', grade: 8.5, status: 'cursando' },
-    { name: 'Física II', grade: 7.2, status: 'cursando' },
-    { name: 'Programação OO', grade: 9.0, status: 'cursando' },
-    { name: 'Estatística', grade: 6.8, status: 'cursando' },
-    { name: 'Inglês Técnico', grade: 8.0, status: 'cursando' },
+    { id: '1', name: 'Cálculo II', grade: 8.5, status: 'cursando' },
+    { id: '2', name: 'Física II', grade: 7.2, status: 'cursando' },
+    { id: '3', name: 'Programação OO', grade: 9.0, status: 'cursando' },
+    { id: '4', name: 'Estatística', grade: 6.8, status: 'cursando' },
+    { id: '5', name: 'Inglês Técnico', grade: 8.0, status: 'cursando' },
   ];
 
   const notices = [
@@ -156,15 +156,20 @@ const Dashboard = () => {
               </div>
 
               {/* Subjects */}
-              <div className="bg-card rounded-xl border border-border divide-y divide-border">
+              <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
                 {subjects.map((s, i) => (
-                  <div key={i} className="flex items-center justify-between px-4 py-3">
-                    <span className="text-sm font-medium text-foreground">{s.name}</span>
+                  <button
+                    key={i}
+                    onClick={() => navigate(`/materia/${s.id}`)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/60 transition-colors group"
+                  >
+                    <span className="text-sm font-medium text-foreground group-hover:text-primary">{s.name}</span>
                     <div className="flex items-center gap-3">
                       <span className="text-sm font-semibold text-primary">{s.grade.toFixed(1)}</span>
                       <Badge variant="secondary" className="text-xs">{s.status}</Badge>
+                      <span className="text-muted-foreground group-hover:text-primary transition-colors">›</span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </motion.div>
