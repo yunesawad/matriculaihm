@@ -29,26 +29,42 @@ function riskLevel(s: SubjectAttendance): 'ok' | 'alerta' | 'critico' {
 
 const Attendance = () => {
   const navigate = useNavigate();
-  const [selectedId, setSelectedId] = useState<string>(subjectsAttendance[0].id);
+  const [subjects, setSubjects] = useState<SubjectAttendance[]>(() => getAllSubjects());
+  const [selectedId, setSelectedId] = useState<string>(subjects[0]?.id ?? '');
   const [filter, setFilter] = useState<FilterStatus>('todos');
 
+  // Recarrega quando uma nova matrícula é confirmada
+  useEffect(() => {
+    const refresh = () => {
+      const next = getAllSubjects();
+      setSubjects(next);
+      setSelectedId(prev => next.some(s => s.id === prev) ? prev : (next[0]?.id ?? ''));
+    };
+    window.addEventListener('enrollment:updated', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('enrollment:updated', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
   const selected = useMemo(
-    () => subjectsAttendance.find(s => s.id === selectedId)!,
-    [selectedId],
+    () => subjects.find(s => s.id === selectedId) ?? subjects[0],
+    [subjects, selectedId],
   );
 
   const filteredRecords = useMemo(
-    () => filter === 'todos' ? selected.records : selected.records.filter(r => r.status === filter),
+    () => !selected ? [] : filter === 'todos' ? selected.records : selected.records.filter(r => r.status === filter),
     [selected, filter],
   );
 
   const totals = useMemo(() => {
-    const totalClasses = subjectsAttendance.reduce((s, x) => s + x.totalClasses, 0);
-    const attended = subjectsAttendance.reduce((s, x) => s + x.attendedClasses, 0);
-    const absences = subjectsAttendance.reduce((s, x) => s + x.absences, 0);
-    const justified = subjectsAttendance.reduce((s, x) => s + x.justifiedAbsences, 0);
-    return { rate: Math.round((attended / totalClasses) * 100), absences, justified };
-  }, []);
+    const totalClasses = subjects.reduce((s, x) => s + x.totalClasses, 0);
+    const attended = subjects.reduce((s, x) => s + x.attendedClasses, 0);
+    const absences = subjects.reduce((s, x) => s + x.absences, 0);
+    const justified = subjects.reduce((s, x) => s + x.justifiedAbsences, 0);
+    return { rate: totalClasses ? Math.round((attended / totalClasses) * 100) : 0, absences, justified };
+  }, [subjects]);
 
   return (
     <div className="min-h-screen bg-background">
