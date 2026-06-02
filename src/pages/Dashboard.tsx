@@ -1,10 +1,20 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, CalendarCheck, Clock, FileText, GraduationCap, HelpCircle, History, LayoutDashboard, Star } from 'lucide-react';
+import { Bell, BookOpen, CalendarCheck, Clock, FileText, GraduationCap, HelpCircle, History, Inbox, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { courses, type Course } from '@/data/courses';
 
+const ENROLLED_KEY = 'enrollment.confirmedCourseIds.v1';
+
+function readEnrolledCourses(): Course[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const ids: string[] = JSON.parse(localStorage.getItem(ENROLLED_KEY) || '[]');
+    return courses.filter(c => ids.includes(c.id));
+  } catch { return []; }
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,6 +30,21 @@ const Dashboard = () => {
   const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   const isOpen = diffMs > 0;
 
+  // Disciplinas matriculadas (persistidas no localStorage pelo fluxo de matrícula)
+  const [enrolled, setEnrolled] = useState<Course[]>(() => readEnrolledCourses());
+  const refresh = useCallback(() => setEnrolled(readEnrolledCourses()), []);
+  useEffect(() => {
+    window.addEventListener('enrollment:updated', refresh);
+    window.addEventListener('storage', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('enrollment:updated', refresh);
+      window.removeEventListener('storage', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refresh]);
+
+  const totalCredits = enrolled.reduce((s, c) => s + c.credits, 0);
 
   const quickLinks = [
     { icon: CalendarCheck, label: 'Controle de Presença', href: '/presenca' },
@@ -29,19 +54,12 @@ const Dashboard = () => {
     { icon: HelpCircle, label: 'Suporte', href: '#' },
   ];
 
-  const subjects = [
-    { id: '1', name: 'Cálculo II', grade: 8.5, status: 'cursando' },
-    { id: '2', name: 'Física II', grade: 7.2, status: 'cursando' },
-    { id: '3', name: 'Programação OO', grade: 9.0, status: 'cursando' },
-    { id: '4', name: 'Estatística', grade: 6.8, status: 'cursando' },
-    { id: '5', name: 'Inglês Técnico', grade: 8.0, status: 'cursando' },
-  ];
-
-  const notices = [
-    { text: 'Entrega do trabalho de Cálculo II — 02/04', type: 'deadline' as const },
-    { text: 'Pendência: Atualizar dados cadastrais', type: 'pending' as const },
-    { text: 'Prova de Física II — 08/04', type: 'deadline' as const },
-  ];
+  const notices = enrolled.length === 0
+    ? [{ text: 'Você ainda não está matriculado em nenhuma disciplina. Faça sua matrícula!', type: 'pending' as const }]
+    : [
+        { text: 'Acompanhe sua frequência em Controle de Presença', type: 'deadline' as const },
+        { text: 'Mantenha seus dados cadastrais atualizados', type: 'pending' as const },
+      ];
 
   return (
     <div className="min-h-screen bg-background">
