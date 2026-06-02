@@ -129,6 +129,17 @@ const Attendance = () => {
             <h3 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-2 px-1">
               Disciplinas
             </h3>
+            {subjects.length === 0 && (
+              <div className="bg-card rounded-xl border border-dashed border-border p-6 text-center">
+                <p className="text-sm font-medium text-foreground mb-1">Sem disciplinas</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Realize sua matrícula para acompanhar a presença aqui.
+                </p>
+                <Button size="sm" onClick={() => navigate('/matricula')}>
+                  Fazer matrícula
+                </Button>
+              </div>
+            )}
             {subjects.map(s => {
               const rate = attendanceRate(s);
               const risk = riskLevel(s);
