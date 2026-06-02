@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
 import { useEffect, useState, useCallback } from 'react';
 import { courses, type Course } from '@/data/courses';
+import EnrolledSubjectsSidebar from '@/components/EnrolledSubjectsSidebar';
 
 const ENROLLED_KEY = 'enrollment.confirmedCourseIds.v1';
 
@@ -72,7 +73,7 @@ const Dashboard = () => {
                 <GraduationCap className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="font-display font-bold text-foreground text-lg leading-tight">UniSystem</h1>
+                <h1 className="font-display font-bold text-foreground text-lg leading-tight">Udc Portal</h1>
                 <p className="text-xs text-muted-foreground">Sistema Acadêmico</p>
               </div>
             </div>
@@ -88,12 +89,15 @@ const Dashboard = () => {
                 <Bell className="w-5 h-5 text-muted-foreground" />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
               </button>
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/perfil')}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-colors"
+              >
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <span className="text-sm font-semibold text-primary">JM</span>
+                  <span className="text-sm font-semibold text-primary">JS</span>
                 </div>
-                <span className="hidden sm:block text-sm font-medium text-foreground">João Martins</span>
-              </div>
+                <span className="hidden sm:block text-sm font-medium text-foreground">Joao da Silva</span>
+              </button>
             </div>
           </div>
         </div>
@@ -230,36 +234,18 @@ const Dashboard = () => {
             </motion.div>
           </div>
 
-          {/* Sidebar - Quick Links */}
+          {/* Sidebar - Enrolled Subjects with Tips */}
           <motion.aside
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.15 }}
-            className="hidden lg:block w-64 flex-shrink-0"
+            className="hidden lg:block w-80 flex-shrink-0"
           >
-            <div className="bg-card rounded-xl border border-border p-4 sticky top-24">
-              <h4 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-3">
-                Acesso Rápido
-              </h4>
-              <nav className="space-y-1">
-                {quickLinks.map((link) => (
-                  <a
-                    key={link.label}
-                    href={link.href}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                  >
-                    <link.icon className="w-4 h-4 text-muted-foreground" />
-                    {link.label}
-                  </a>
-                ))}
-              </nav>
-              <div className="mt-4 pt-4 border-t border-border">
-                <div className="bg-muted rounded-lg p-3">
-                  <p className="text-xs text-muted-foreground mb-1">Próximo evento</p>
-                  <p className="text-sm font-medium text-foreground">Prova Cálculo II</p>
-                  <p className="text-xs text-primary font-semibold">02/04 — 14h</p>
-                </div>
-              </div>
+            <div className="sticky top-24 space-y-4">
+              <EnrolledSubjectsSidebar />
+              
+              {/* Quick Links */}
+            
             </div>
           </motion.aside>
         </div>

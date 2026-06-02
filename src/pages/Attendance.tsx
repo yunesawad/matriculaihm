@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getAllSubjects, type SubjectAttendance } from '@/data/attendance';
 
+
 type FilterStatus = 'todos' | 'presente' | 'falta' | 'justificada';
 
 const statusMeta = {

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useEnrollment } from '@/context/EnrollmentContext';
+import { useEnrollment, ENROLLED_KEY } from '@/context/EnrollmentContext';
 import Stepper from '@/components/Stepper';
 import CourseCard from '@/components/CourseCard';
 import EnrollmentSidebar from '@/components/EnrollmentSidebar';
@@ -28,8 +28,33 @@ const EnrollmentPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set());
+
+  // Lê IDs matriculados do localStorage
+  useEffect(() => {
+    try {
+      const enrolled: string[] = JSON.parse(localStorage.getItem(ENROLLED_KEY) || '[]');
+      setEnrolledIds(new Set(enrolled));
+    } catch {
+      setEnrolledIds(new Set());
+    }
+
+    const handleUpdate = () => {
+      try {
+        const enrolled: string[] = JSON.parse(localStorage.getItem(ENROLLED_KEY) || '[]');
+        setEnrolledIds(new Set(enrolled));
+      } catch {
+        setEnrolledIds(new Set());
+      }
+    };
+
+    window.addEventListener('enrollment:updated', handleUpdate);
+    return () => window.removeEventListener('enrollment:updated', handleUpdate);
+  }, []);
 
   const filteredCourses = courses.filter(c => {
+    // Não mostrar cursos já matriculados
+    if (enrolledIds.has(c.id)) return false;
     if (typeFilter !== 'all' && c.type !== typeFilter) return false;
     if (periodFilter !== null && c.period !== periodFilter) return false;
     if (statusFilter === 'enabled' && !c.enabled) return false;
