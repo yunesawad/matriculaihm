@@ -161,35 +161,59 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div className="bg-card rounded-xl p-4 border border-border">
                   <p className="text-sm text-muted-foreground mb-1">Disciplinas</p>
-                  <p className="text-2xl font-display font-bold text-foreground">5</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{enrolled.length}</p>
                 </div>
                 <div className="bg-card rounded-xl p-4 border border-border">
                   <p className="text-sm text-muted-foreground mb-1">CR Atual</p>
-                  <p className="text-2xl font-display font-bold text-primary">7.9</p>
+                  <p className="text-2xl font-display font-bold text-primary">{enrolled.length ? '—' : '0.0'}</p>
                 </div>
                 <div className="bg-card rounded-xl p-4 border border-border">
                   <p className="text-sm text-muted-foreground mb-1">Créditos</p>
-                  <p className="text-2xl font-display font-bold text-foreground">20</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{totalCredits}</p>
                 </div>
               </div>
 
               {/* Subjects */}
-              <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
-                {subjects.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => navigate(`/materia/${s.id}`)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/60 transition-colors group"
-                  >
-                    <span className="text-sm font-medium text-foreground group-hover:text-primary">{s.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-primary">{s.grade.toFixed(1)}</span>
-                      <Badge variant="secondary" className="text-xs">{s.status}</Badge>
-                      <span className="text-muted-foreground group-hover:text-primary transition-colors">›</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {enrolled.length === 0 ? (
+                <div className="bg-card rounded-xl border border-dashed border-border p-8 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                    <Inbox className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <p className="font-display font-bold text-foreground mb-1">
+                    Nenhuma disciplina matriculada
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Inicie sua simulação de matrícula para ver as disciplinas aqui.
+                  </p>
+                  <Button onClick={() => navigate('/matricula')} className="gap-2">
+                    <BookOpen className="w-4 h-4" /> Fazer matrícula
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
+                  {enrolled.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => navigate(`/materia/enr-${c.id}`)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/60 transition-colors group"
+                    >
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-foreground group-hover:text-primary block truncate">
+                          {c.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono">{c.code} · {c.professor}</span>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <Badge variant="secondary" className="text-xs">{c.credits} cr</Badge>
+                        <Badge variant="outline" className="text-xs border-success/40 text-success bg-success/10">
+                          matriculado
+                        </Badge>
+                        <span className="text-muted-foreground group-hover:text-primary transition-colors">›</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             {/* Notices */}
