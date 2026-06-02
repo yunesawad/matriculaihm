@@ -31,6 +31,7 @@ interface EnrollmentState {
 
 const EnrollmentContext = createContext<EnrollmentState | null>(null);
 const STORAGE_KEY = 'enrollment.selectedCourseIds.v1';
+export const ENROLLED_KEY = 'enrollment.confirmedCourseIds.v1';
 
 export function useEnrollment() {
   const ctx = useContext(EnrollmentContext);
