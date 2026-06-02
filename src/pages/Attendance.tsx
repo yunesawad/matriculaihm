@@ -129,10 +129,11 @@ const Attendance = () => {
             <h3 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-2 px-1">
               Disciplinas
             </h3>
-            {subjectsAttendance.map(s => {
+            {subjects.map(s => {
               const rate = attendanceRate(s);
               const risk = riskLevel(s);
               const isActive = s.id === selectedId;
+              const isNew = s.id.startsWith('enr-');
               return (
                 <button
                   key={s.id}
@@ -148,21 +149,29 @@ const Attendance = () => {
                       <p className="text-xs text-muted-foreground font-mono">{s.code}</p>
                       <p className="font-semibold text-foreground text-sm leading-tight truncate">{s.name}</p>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={
-                        risk === 'critico' ? 'border-destructive/40 text-destructive bg-destructive/10'
-                        : risk === 'alerta' ? 'border-warning/40 text-warning bg-warning/10'
-                        : 'border-success/40 text-success bg-success/10'
-                      }
-                    >
-                      {rate}%
-                    </Badge>
+                    {isNew ? (
+                      <Badge variant="outline" className="border-primary/40 text-primary bg-primary/10 gap-1">
+                        <Sparkles className="w-3 h-3" /> Nova
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className={
+                          risk === 'critico' ? 'border-destructive/40 text-destructive bg-destructive/10'
+                          : risk === 'alerta' ? 'border-warning/40 text-warning bg-warning/10'
+                          : 'border-success/40 text-success bg-success/10'
+                        }
+                      >
+                        {rate}%
+                      </Badge>
+                    )}
                   </div>
                   <Progress value={rate} className="h-1.5" />
                   <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                    <span>{s.attendedClasses}/{s.totalClasses} aulas</span>
-                    <span>{s.absences}/{s.maxAbsences} faltas</span>
+                    <span>
+                      {isNew ? 'Aulas ainda não iniciadas' : `${s.attendedClasses}/${s.totalClasses} aulas`}
+                    </span>
+                    {!isNew && <span>{s.absences}/{s.maxAbsences} faltas</span>}
                   </div>
                 </button>
               );
