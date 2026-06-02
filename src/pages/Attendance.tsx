@@ -1,13 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowLeft, Calendar, CheckCircle2, ClipboardList, Download, FileWarning, GraduationCap, XCircle } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Calendar, CheckCircle2, ClipboardList, Download, FileWarning, GraduationCap, Sparkles, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { subjectsAttendance, type SubjectAttendance } from '@/data/attendance';
+import { getAllSubjects, type SubjectAttendance } from '@/data/attendance';
 
 type FilterStatus = 'todos' | 'presente' | 'falta' | 'justificada';
 
@@ -18,6 +18,7 @@ const statusMeta = {
 } as const;
 
 function attendanceRate(s: SubjectAttendance) {
+  if (!s.totalClasses) return 0;
   return Math.round((s.attendedClasses / s.totalClasses) * 100);
 }
 function riskLevel(s: SubjectAttendance): 'ok' | 'alerta' | 'critico' {
@@ -29,26 +30,42 @@ function riskLevel(s: SubjectAttendance): 'ok' | 'alerta' | 'critico' {
 
 const Attendance = () => {
   const navigate = useNavigate();
-  const [selectedId, setSelectedId] = useState<string>(subjectsAttendance[0].id);
+  const [subjects, setSubjects] = useState<SubjectAttendance[]>(() => getAllSubjects());
+  const [selectedId, setSelectedId] = useState<string>(subjects[0]?.id ?? '');
   const [filter, setFilter] = useState<FilterStatus>('todos');
 
+  // Recarrega quando uma nova matrícula é confirmada
+  useEffect(() => {
+    const refresh = () => {
+      const next = getAllSubjects();
+      setSubjects(next);
+      setSelectedId(prev => next.some(s => s.id === prev) ? prev : (next[0]?.id ?? ''));
+    };
+    window.addEventListener('enrollment:updated', refresh);
+    window.addEventListener('storage', refresh);
+    return () => {
+      window.removeEventListener('enrollment:updated', refresh);
+      window.removeEventListener('storage', refresh);
+    };
+  }, []);
+
   const selected = useMemo(
-    () => subjectsAttendance.find(s => s.id === selectedId)!,
-    [selectedId],
+    () => subjects.find(s => s.id === selectedId) ?? subjects[0],
+    [subjects, selectedId],
   );
 
   const filteredRecords = useMemo(
-    () => filter === 'todos' ? selected.records : selected.records.filter(r => r.status === filter),
+    () => !selected ? [] : filter === 'todos' ? selected.records : selected.records.filter(r => r.status === filter),
     [selected, filter],
   );
 
   const totals = useMemo(() => {
-    const totalClasses = subjectsAttendance.reduce((s, x) => s + x.totalClasses, 0);
-    const attended = subjectsAttendance.reduce((s, x) => s + x.attendedClasses, 0);
-    const absences = subjectsAttendance.reduce((s, x) => s + x.absences, 0);
-    const justified = subjectsAttendance.reduce((s, x) => s + x.justifiedAbsences, 0);
-    return { rate: Math.round((attended / totalClasses) * 100), absences, justified };
-  }, []);
+    const totalClasses = subjects.reduce((s, x) => s + x.totalClasses, 0);
+    const attended = subjects.reduce((s, x) => s + x.attendedClasses, 0);
+    const absences = subjects.reduce((s, x) => s + x.absences, 0);
+    const justified = subjects.reduce((s, x) => s + x.justifiedAbsences, 0);
+    return { rate: totalClasses ? Math.round((attended / totalClasses) * 100) : 0, absences, justified };
+  }, [subjects]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -112,10 +129,11 @@ const Attendance = () => {
             <h3 className="font-display font-semibold text-sm text-muted-foreground uppercase tracking-wider mb-2 px-1">
               Disciplinas
             </h3>
-            {subjectsAttendance.map(s => {
+            {subjects.map(s => {
               const rate = attendanceRate(s);
               const risk = riskLevel(s);
               const isActive = s.id === selectedId;
+              const isNew = s.id.startsWith('enr-');
               return (
                 <button
                   key={s.id}
@@ -131,21 +149,29 @@ const Attendance = () => {
                       <p className="text-xs text-muted-foreground font-mono">{s.code}</p>
                       <p className="font-semibold text-foreground text-sm leading-tight truncate">{s.name}</p>
                     </div>
-                    <Badge
-                      variant="outline"
-                      className={
-                        risk === 'critico' ? 'border-destructive/40 text-destructive bg-destructive/10'
-                        : risk === 'alerta' ? 'border-warning/40 text-warning bg-warning/10'
-                        : 'border-success/40 text-success bg-success/10'
-                      }
-                    >
-                      {rate}%
-                    </Badge>
+                    {isNew ? (
+                      <Badge variant="outline" className="border-primary/40 text-primary bg-primary/10 gap-1">
+                        <Sparkles className="w-3 h-3" /> Nova
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className={
+                          risk === 'critico' ? 'border-destructive/40 text-destructive bg-destructive/10'
+                          : risk === 'alerta' ? 'border-warning/40 text-warning bg-warning/10'
+                          : 'border-success/40 text-success bg-success/10'
+                        }
+                      >
+                        {rate}%
+                      </Badge>
+                    )}
                   </div>
                   <Progress value={rate} className="h-1.5" />
                   <div className="flex items-center justify-between mt-2 text-xs text-muted-foreground">
-                    <span>{s.attendedClasses}/{s.totalClasses} aulas</span>
-                    <span>{s.absences}/{s.maxAbsences} faltas</span>
+                    <span>
+                      {isNew ? 'Aulas ainda não iniciadas' : `${s.attendedClasses}/${s.totalClasses} aulas`}
+                    </span>
+                    {!isNew && <span>{s.absences}/{s.maxAbsences} faltas</span>}
                   </div>
                 </button>
               );
@@ -153,6 +179,7 @@ const Attendance = () => {
           </aside>
 
           {/* Detalhe da disciplina */}
+          {selected && (
           <motion.section
             key={selected.id}
             initial={{ opacity: 0, y: 12 }}
@@ -271,6 +298,7 @@ const Attendance = () => {
               </div>
             </div>
           </motion.section>
+          )}
         </div>
       </div>
     </div>

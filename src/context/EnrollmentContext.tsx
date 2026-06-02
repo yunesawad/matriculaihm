@@ -31,6 +31,7 @@ interface EnrollmentState {
 
 const EnrollmentContext = createContext<EnrollmentState | null>(null);
 const STORAGE_KEY = 'enrollment.selectedCourseIds.v1';
+export const ENROLLED_KEY = 'enrollment.confirmedCourseIds.v1';
 
 export function useEnrollment() {
   const ctx = useContext(EnrollmentContext);
@@ -115,8 +116,15 @@ export function EnrollmentProvider({ children }: { children: React.ReactNode }) 
   const confirmEnrollment = useCallback(() => {
     setConfirmed(true);
     setStep('confirm');
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
-  }, []);
+    try {
+      // Persiste IDs matriculados para aparecerem em Presença / Detalhe da matéria
+      const existing: string[] = JSON.parse(localStorage.getItem(ENROLLED_KEY) || '[]');
+      const merged = Array.from(new Set([...existing, ...selectedCourses.map(c => c.id)]));
+      localStorage.setItem(ENROLLED_KEY, JSON.stringify(merged));
+      window.dispatchEvent(new Event('enrollment:updated'));
+      localStorage.removeItem(STORAGE_KEY);
+    } catch { /* ignore */ }
+  }, [selectedCourses]);
 
   const reset = useCallback(() => {
     setStep('select');
