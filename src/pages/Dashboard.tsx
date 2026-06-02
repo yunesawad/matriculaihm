@@ -1,10 +1,20 @@
 import { useNavigate } from 'react-router-dom';
-import { Bell, BookOpen, CalendarCheck, Clock, FileText, GraduationCap, HelpCircle, History, LayoutDashboard, Star } from 'lucide-react';
+import { Bell, BookOpen, CalendarCheck, Clock, FileText, GraduationCap, HelpCircle, History, Inbox, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { courses, type Course } from '@/data/courses';
 
+const ENROLLED_KEY = 'enrollment.confirmedCourseIds.v1';
+
+function readEnrolledCourses(): Course[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const ids: string[] = JSON.parse(localStorage.getItem(ENROLLED_KEY) || '[]');
+    return courses.filter(c => ids.includes(c.id));
+  } catch { return []; }
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -20,6 +30,21 @@ const Dashboard = () => {
   const daysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   const isOpen = diffMs > 0;
 
+  // Disciplinas matriculadas (persistidas no localStorage pelo fluxo de matrícula)
+  const [enrolled, setEnrolled] = useState<Course[]>(() => readEnrolledCourses());
+  const refresh = useCallback(() => setEnrolled(readEnrolledCourses()), []);
+  useEffect(() => {
+    window.addEventListener('enrollment:updated', refresh);
+    window.addEventListener('storage', refresh);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.removeEventListener('enrollment:updated', refresh);
+      window.removeEventListener('storage', refresh);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [refresh]);
+
+  const totalCredits = enrolled.reduce((s, c) => s + c.credits, 0);
 
   const quickLinks = [
     { icon: CalendarCheck, label: 'Controle de Presença', href: '/presenca' },
@@ -29,19 +54,12 @@ const Dashboard = () => {
     { icon: HelpCircle, label: 'Suporte', href: '#' },
   ];
 
-  const subjects = [
-    { id: '1', name: 'Cálculo II', grade: 8.5, status: 'cursando' },
-    { id: '2', name: 'Física II', grade: 7.2, status: 'cursando' },
-    { id: '3', name: 'Programação OO', grade: 9.0, status: 'cursando' },
-    { id: '4', name: 'Estatística', grade: 6.8, status: 'cursando' },
-    { id: '5', name: 'Inglês Técnico', grade: 8.0, status: 'cursando' },
-  ];
-
-  const notices = [
-    { text: 'Entrega do trabalho de Cálculo II — 02/04', type: 'deadline' as const },
-    { text: 'Pendência: Atualizar dados cadastrais', type: 'pending' as const },
-    { text: 'Prova de Física II — 08/04', type: 'deadline' as const },
-  ];
+  const notices = enrolled.length === 0
+    ? [{ text: 'Você ainda não está matriculado em nenhuma disciplina. Faça sua matrícula!', type: 'pending' as const }]
+    : [
+        { text: 'Acompanhe sua frequência em Controle de Presença', type: 'deadline' as const },
+        { text: 'Mantenha seus dados cadastrais atualizados', type: 'pending' as const },
+      ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,35 +161,59 @@ const Dashboard = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
                 <div className="bg-card rounded-xl p-4 border border-border">
                   <p className="text-sm text-muted-foreground mb-1">Disciplinas</p>
-                  <p className="text-2xl font-display font-bold text-foreground">5</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{enrolled.length}</p>
                 </div>
                 <div className="bg-card rounded-xl p-4 border border-border">
                   <p className="text-sm text-muted-foreground mb-1">CR Atual</p>
-                  <p className="text-2xl font-display font-bold text-primary">7.9</p>
+                  <p className="text-2xl font-display font-bold text-primary">{enrolled.length ? '—' : '0.0'}</p>
                 </div>
                 <div className="bg-card rounded-xl p-4 border border-border">
                   <p className="text-sm text-muted-foreground mb-1">Créditos</p>
-                  <p className="text-2xl font-display font-bold text-foreground">20</p>
+                  <p className="text-2xl font-display font-bold text-foreground">{totalCredits}</p>
                 </div>
               </div>
 
               {/* Subjects */}
-              <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
-                {subjects.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => navigate(`/materia/${s.id}`)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/60 transition-colors group"
-                  >
-                    <span className="text-sm font-medium text-foreground group-hover:text-primary">{s.name}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-primary">{s.grade.toFixed(1)}</span>
-                      <Badge variant="secondary" className="text-xs">{s.status}</Badge>
-                      <span className="text-muted-foreground group-hover:text-primary transition-colors">›</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              {enrolled.length === 0 ? (
+                <div className="bg-card rounded-xl border border-dashed border-border p-8 text-center">
+                  <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-muted flex items-center justify-center">
+                    <Inbox className="w-6 h-6 text-muted-foreground" />
+                  </div>
+                  <p className="font-display font-bold text-foreground mb-1">
+                    Nenhuma disciplina matriculada
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Inicie sua simulação de matrícula para ver as disciplinas aqui.
+                  </p>
+                  <Button onClick={() => navigate('/matricula')} className="gap-2">
+                    <BookOpen className="w-4 h-4" /> Fazer matrícula
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-card rounded-xl border border-border divide-y divide-border overflow-hidden">
+                  {enrolled.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => navigate(`/materia/enr-${c.id}`)}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/60 transition-colors group"
+                    >
+                      <div className="min-w-0">
+                        <span className="text-sm font-medium text-foreground group-hover:text-primary block truncate">
+                          {c.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono">{c.code} · {c.professor}</span>
+                      </div>
+                      <div className="flex items-center gap-3 flex-shrink-0">
+                        <Badge variant="secondary" className="text-xs">{c.credits} cr</Badge>
+                        <Badge variant="outline" className="text-xs border-success/40 text-success bg-success/10">
+                          matriculado
+                        </Badge>
+                        <span className="text-muted-foreground group-hover:text-primary transition-colors">›</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </motion.div>
 
             {/* Notices */}
