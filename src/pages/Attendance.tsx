@@ -179,6 +179,7 @@ const Attendance = () => {
           </aside>
 
           {/* Detalhe da disciplina */}
+          {selected && (
           <motion.section
             key={selected.id}
             initial={{ opacity: 0, y: 12 }}
