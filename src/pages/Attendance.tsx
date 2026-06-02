@@ -298,6 +298,7 @@ const Attendance = () => {
               </div>
             </div>
           </motion.section>
+          )}
         </div>
       </div>
     </div>
